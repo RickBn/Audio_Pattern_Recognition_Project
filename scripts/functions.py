@@ -5,9 +5,13 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import svm
 from sklearn.metrics import accuracy_score
+from sklearn.neural_network import MLPClassifier
+
 
 
 def detectOutliers(df, rm=False):
@@ -48,6 +52,22 @@ def chunk(seq, num):
 #Precision = TP / (TP + FP)
 #Recall = TP / (TP + FN)
 
+def n_shuffle_cv(df, num_splits, params, num_shuffles):
+    cv_train, cv_test = [[] for i in range(num_shuffles)], [[] for i in range(num_shuffles)]
+
+    for i in range(num_shuffles):
+        train, test = k_fold_cv(df, num_splits, params)
+        cv_train[i] = train
+        cv_test[i] = test
+
+
+    train_df = pd.DataFrame(cv_train)
+    test_df = pd.DataFrame(cv_test)
+    final_train = train_df.mean()
+    final_test = test_df.mean()
+
+    return [final_train, final_test]
+
 def k_fold_cv(data, num_splits, k):
 
     cv_train = np.zeros(len(k))
@@ -70,18 +90,22 @@ def k_fold_cv(data, num_splits, k):
             y_train = ts['genre']
             X_train = ts.loc[:, c.columns != 'genre']
 
-            neigh = KNeighborsClassifier(n_neighbors=a)
 
-            scaler = MinMaxScaler()
+            #classifier = KNeighborsClassifier(n_neighbors=a)
+            #classifier = DecisionTreeClassifier(random_state=0)
+            #classifier = MLPClassifier(random_state=1, max_iter=800)
+            classifier = svm.SVC(C=a,decision_function_shape='ovo')
+
+            scaler = StandardScaler() # MinMaxScaler()
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.fit_transform(X_test)
 
-            neigh.fit(X_train, y_train)
+            classifier.fit(X_train, y_train)
 
-            y_p_train = neigh.predict(X_train)
+            y_p_train = classifier.predict(X_train)
             cv_train_error[j] = accuracy_score(y_train, y_p_train)
 
-            y_p_test = neigh.predict(X_test)
+            y_p_test =  classifier.predict(X_test)
             cv_test_error[j] = accuracy_score(y_test, y_p_test)
 
         cv_train[i] = np.mean(cv_train_error)

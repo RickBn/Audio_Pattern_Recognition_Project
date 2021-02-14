@@ -6,7 +6,7 @@ import librosa.display
 sr = 22050
 path = "data/genres_original/"
 
-# file = "genres_original/blues/blues.00000.wav"
+# file = "data/genres_original/blues/blues.00000.wav"
 # with wave.open(file, 'rb') as f:
 #     framerate = f.getframerate()
 #
@@ -25,18 +25,16 @@ files = librosa.util.find_files(path, ext=['wav'])
 files = np.array(files)
 files = np.delete(files, 554)
 
-df = pd.DataFrame(data={'filename': [], 'genre': [],
-                        'zcr_mean': [], 'zcr_var': [],
-                        'spectral_centroid_mean': [], 'spectral_centroid_var': [],
-                        'spectral_rolloff_mean': [], 'spectral_rolloff_var': [],
-                        'chroma_mean': [], 'chroma_var': [],
-                        'mfcc1_mean': [], 'mfcc1_var': [], 'mfcc2_mean': [], 'mfcc2_var': [],
-                        'mfcc3_mean': [], 'mfcc3_var': [], 'mfcc4_mean': [], 'mfcc4_var': [],
-                        'mfcc5_mean': [], 'mfcc5_var': [], 'mfcc6_mean': [], 'mfcc6_var': [],
-                        'mfcc7_mean': [], 'mfcc7_var': [], 'mfcc8_mean': [], 'mfcc8_var': [],
-                        'mfcc9_mean': [], 'mfcc9_var': [], 'mfcc10_mean': [], 'mfcc10_var': [],
-                        'mfcc11_mean': [], 'mfcc11_var': [], 'mfcc12_mean': [], 'mfcc12_var': [],
-                        'mfcc13_mean': [], 'mfcc13_var': []})
+df = pd.DataFrame(data={'genre': [], 'rms_mean': [], 'rms_std': [], 'tempo': [],
+                        'zcr_mean': [], 'zcr_std': [], 'spectral_centroid_mean': [], 'spectral_centroid_std': [],
+                        'spectral_rolloff_mean': [], 'spectral_rolloff_std': [], 'chroma_mean': [], 'chroma_std': [],
+                        'mfcc1_mean': [], 'mfcc1_std': [], 'mfcc2_mean': [], 'mfcc2_std': [],
+                        'mfcc3_mean': [], 'mfcc3_std': [], 'mfcc4_mean': [], 'mfcc4_std': [],
+                        'mfcc5_mean': [], 'mfcc5_std': [], 'mfcc6_mean': [], 'mfcc6_std': [],
+                        'mfcc7_mean': [], 'mfcc7_std': [], 'mfcc8_mean': [], 'mfcc8_std': [],
+                        'mfcc9_mean': [], 'mfcc9_std': [], 'mfcc10_mean': [], 'mfcc10_std': [],
+                        'mfcc11_mean': [], 'mfcc11_std': [], 'mfcc12_mean': [], 'mfcc12_std': [],
+                        'mfcc13_mean': [], 'mfcc13_std': []})
 
 signals = []
 for i, f in enumerate(files):
@@ -46,22 +44,29 @@ for i, f in enumerate(files):
 for i, f in enumerate(files):
     t = f.split('\\')
     x = signals[i]
+    rms = librosa.feature.rms(x)
+    oenv = librosa.onset.onset_strength(x, sr=sr)
+    tempo = librosa.beat.tempo(onset_envelope=oenv, sr=sr)[0]
     zcr = librosa.feature.zero_crossing_rate(x)
     s_centroid = librosa.feature.spectral_centroid(x, sr=sr)
     s_rolloff = librosa.feature.spectral_rolloff(x, sr=sr)
     chroma = librosa.feature.chroma_stft(x, sr=sr)
     MFCCS = librosa.feature.mfcc(x, sr=sr)
-    features = [t[-1], t[-2],
-                np.mean(zcr), np.var(zcr),
-                np.mean(s_centroid), np.var(s_centroid),
-                np.mean(s_rolloff), np.var(s_rolloff),
-                np.mean(chroma), np.var(chroma)]
 
-    #Extract mean and variance of the first 13 MFCCs
+    features = [t[-2],
+                np.mean(rms), np.std(rms), tempo,
+                np.mean(zcr), np.std(zcr),
+                np.mean(s_centroid), np.std(s_centroid),
+                np.mean(s_rolloff), np.std(s_rolloff),
+                np.mean(chroma), np.std(chroma)]
+
+    #Extract mean and std of the first 13 MFCCs
     for c in range(0, 13):
-        features = features + [np.mean(MFCCS[c]), np.var(MFCCS[c])]
+        features = features + [np.mean(MFCCS[c]), np.std(MFCCS[c])]
 
     df.loc[i] = features
+
+df.to_csv("data/new.csv")
 
 # x, sr = librosa.load(files[0], sr=22050)
 #
