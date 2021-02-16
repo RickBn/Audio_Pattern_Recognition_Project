@@ -1,5 +1,4 @@
 from scripts.functions import *
-import matplotlib.pyplot as plt
 
 #df = pd.read_csv('data/features.csv', index_col=0)
 df = pd.read_csv('data/new.csv', index_col=0)

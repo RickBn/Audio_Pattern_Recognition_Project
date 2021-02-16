@@ -1,19 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn import svm
-from sklearn.metrics import accuracy_score, precision_score, recall_score, classification_report
-from sklearn.neural_network import MLPClassifier
-import seaborn as sn
-
-
+from sklearn.metrics import accuracy_score
 
 def detectOutliers(df, rm=False):
     for f in df.columns:
