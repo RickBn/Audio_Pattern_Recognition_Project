@@ -9,8 +9,9 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import svm
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, plot_confusion_matrix
 from sklearn.neural_network import MLPClassifier
+import seaborn as sn
 
 
 
@@ -72,6 +73,8 @@ def k_fold_cv(data, num_splits, k):
 
     cv_train = np.zeros(len(k))
     cv_test = np.zeros(len(k))
+    y_t = []
+    y_p = []
 
     data = shuffle(data)
     xyc = chunk(data, num_splits)
@@ -105,10 +108,14 @@ def k_fold_cv(data, num_splits, k):
             y_p_train = classifier.predict(X_train)
             cv_train_error[j] = accuracy_score(y_train, y_p_train)
 
-            y_p_test =  classifier.predict(X_test)
+            y_p_test = classifier.predict(X_test)
+            y_t.append(y_test)
+            y_p.append(pd.Series(y_p_test, index=y_test.index))
             cv_test_error[j] = accuracy_score(y_test, y_p_test)
 
         cv_train[i] = np.mean(cv_train_error)
         cv_test[i] = np.mean(cv_test_error)
+        y_t = pd.Series(pd.concat(y_t).values, name='Actual')
+        y_p = pd.Series(pd.concat(y_p).values, name='Predicted')
 
-    return [cv_train, cv_test]
+    return [cv_train, cv_test, y_t, y_p]

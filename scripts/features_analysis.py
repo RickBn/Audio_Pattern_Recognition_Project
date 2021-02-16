@@ -9,12 +9,14 @@ X = df.loc[:, df.columns != 'genre']
 y = df.genre
 
 
-k = np.arange(1, 10)
-
+#k = np.arange(1, 10)
+k = [1]
 
 #cv_train, cv_test = n_shuffle_cv(df, 10, k, 10)
-cv_train, cv_test = k_fold_cv(df, 10, k)
+cv_train, cv_test, y_t, y_p = k_fold_cv(df, 10, k)
 print(np.max(cv_test))
+conf_matrix = pd.crosstab(y_t, y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
+sn.heatmap(conf_matrix, annot=True, fmt='d')
 
 fig, ax = plt.subplots(figsize=(10, 5))
 ax.plot(k, cv_train)
