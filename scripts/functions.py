@@ -1,6 +1,33 @@
 import pandas as pd
 import numpy as np
+import librosa
 from sklearn.metrics import accuracy_score
+
+
+def spectral_flux(audio_data, sample_rate=22050):
+    # convert to frequency domain
+    magnitude_spectrum = librosa.stft(audio_data)
+    timebins, freqbins = np.shape(magnitude_spectrum)
+
+    # when do these blocks begin (time in seconds)?
+    timestamps = (np.arange(0, timebins - 1) * (timebins / float(sample_rate)))
+
+    sf = np.sum(np.diff(np.abs(magnitude_spectrum), axis=0) ** 2, axis=1)
+    return sf[1:], np.asarray(timestamps)
+
+def spectral_flux(signal):
+    mag_spectrum = np.abs(librosa.stft(signal))
+    sp_flux = [0]
+    for i in range(1, len(mag_spectrum)):
+        windowFFT = mag_spectrum[i]
+        windowFFTPrev = mag_spectrum[i - 1]
+
+        windowFFT = windowFFT / sum(windowFFT)
+        windowFFTPrev = windowFFTPrev / sum(windowFFTPrev)
+
+        sp_flux.append(sum((windowFFT - windowFFTPrev)**2))
+
+    return sp_flux[1:]
 
 def detectOutliers(df, rm=False):
     for f in df.columns:
@@ -60,8 +87,9 @@ def k_fold_cv(data, num_splits, classifier, scaler):
         y_train = ts['genre']
         X_train = ts.loc[:, c.columns != 'genre']
 
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.fit_transform(X_test)
+        if scaler != None:
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.fit_transform(X_test)
 
         classifier.fit(X_train, y_train)
 
