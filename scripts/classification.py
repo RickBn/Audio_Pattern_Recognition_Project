@@ -35,16 +35,27 @@ sn.heatmap(tree_conf_matrix, annot=True, fmt='d').set_title("Decision Tree")
 print(classification_report(tree_y_t, tree_y_p))
 
 #Multylayer Perceptron
-mlp_cv_train, mlp_cv_test, mlp_y_t, mlp_y_p = k_fold_cv(s_df, 10, MLPClassifier(random_state=1, max_iter=800), scaler)
+mlp_cv_train, mlp_cv_test, mlp_y_t, mlp_y_p = k_fold_cv(s_df, 10, MLPClassifier(hidden_layer_sizes=(128, 64, 32), max_iter=1000), scaler)
 mlp_conf_matrix = pd.crosstab(mlp_y_t, mlp_y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
 sn.heatmap(mlp_conf_matrix, annot=True, fmt='d').set_title("Multylayer Perceptron")
 print(classification_report(mlp_y_t, mlp_y_p))
 
 #Support Vector Machines (kernel = rbf, one-vs-one)
-svm_cv_train, svm_cv_test, svm_y_t, svm_y_p = k_fold_cv(s_df, 10, svm.SVC(C=1, decision_function_shape='ovo'), scaler)
+
+svm_cv_train, svm_cv_test, svm_y_t, svm_y_p = k_fold_cv(s_df, 10, svm.SVC(C=2, decision_function_shape='ovo', kernel='rbf'), scaler)
 svm_conf_matrix = pd.crosstab(svm_y_t, svm_y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
 sn.heatmap(svm_conf_matrix, annot=True, fmt='d').set_title("Support Vector Machines (kernel = rbf)")
 print(classification_report(svm_y_t, svm_y_p))
+
+
+# c = [1, 2, 5, 10, 20, 50, 100, 1000]
+#
+# for c in c:
+# 	svm_cv_train, svm_cv_test, svm_y_t, svm_y_p = k_fold_cv(s_df, 10,
+# 	                                                        svm.SVC(C=c, decision_function_shape='ovo', kernel='rbf'),
+# 	                                                        scaler)
+# 	print(c, accuracy_score(svm_y_t, svm_y_p))
+
 
 
 #Accuracy = (TP + TN)/(TP + TN + FP + FN)

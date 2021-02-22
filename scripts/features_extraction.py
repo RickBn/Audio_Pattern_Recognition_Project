@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 import wave
+from scripts.functions import energy, energy_entropy
 import librosa
 import librosa.display
+import matplotlib.pyplot as plt
 
 sr = 22050
 path = "data/genres_original/"
@@ -11,7 +13,7 @@ path = "data/genres_original/"
 # with wave.open(file, 'rb') as f:
 #     framerate = f.getframerate()
 #
-# Signal, sr = librosa.load(file, sr=22050)
+# y, sr = librosa.load(file, sr=22050)
 #
 # plt.figure(figsize=(15,5))
 # librosa.display.waveplot(Signal, sr=sr)
@@ -26,7 +28,8 @@ files = librosa.util.find_files(path, ext=['wav'])
 files = np.array(files)
 files = np.delete(files, 554)
 
-df = pd.DataFrame(data={'genre': [], 'rms_mean': [], 'rms_std': [], 'tempo': [],
+df = pd.DataFrame(data={'genre': [], 'rms_mean': [], 'rms_std': [], 'sp_flux_mean': [], 'sp_flux_var': [],
+                        'mel_spectrogram_mean' : [], 'mel_spectrogram_var' : [],
                         'zcr_mean': [], 'zcr_std': [], 'spectral_centroid_mean': [], 'spectral_centroid_std': [],
                         'spectral_rolloff_mean': [], 'spectral_rolloff_std': [], 'chroma_mean': [], 'chroma_std': [],
                         'mfcc1_mean': [], 'mfcc1_std': [], 'mfcc2_mean': [], 'mfcc2_std': [],
@@ -39,23 +42,25 @@ df = pd.DataFrame(data={'genre': [], 'rms_mean': [], 'rms_std': [], 'tempo': [],
 
 signals = []
 for i, f in enumerate(files):
-    x, sr = librosa.load(files[i], sr=22050)
-    signals.append(x)
+    y, sr = librosa.load(files[i], sr=22050)
+    signals.append(y)
 
 for i, f in enumerate(files):
     t = f.split('\\')
-    x = signals[i]
-    rms = librosa.feature.rms(x)
-    oenv = librosa.onset.onset_strength(x, sr=sr)
-    tempo = librosa.beat.tempo(onset_envelope=oenv, sr=sr)[0]
-    zcr = librosa.feature.zero_crossing_rate(x)
-    s_centroid = librosa.feature.spectral_centroid(x, sr=sr)
-    s_rolloff = librosa.feature.spectral_rolloff(x, sr=sr)
-    chroma = librosa.feature.chroma_stft(x, sr=sr)
-    MFCCS = librosa.feature.mfcc(x, sr=sr)
+    y = signals[i]
+    rms = librosa.feature.rms(y)[0]
+    flux = librosa.onset.onset_strength(y, sr=sr)
+    mel_sp = librosa.feature.melspectrogram(y, sr=sr)
+    zcr = librosa.feature.zero_crossing_rate(y)
+    s_centroid = librosa.feature.spectral_centroid(y, sr=sr)
+    s_rolloff = librosa.feature.spectral_rolloff(y, sr=sr)
+    chroma = librosa.feature.chroma_stft(y, sr=sr)
+    MFCCS = librosa.feature.mfcc(y, sr=sr)
 
     features = [t[-2],
-                np.mean(rms), np.std(rms), tempo,
+                np.mean(rms), np.std(rms),
+                np.mean(flux), np.std(flux),
+                np.mean(mel_sp), np.std(mel_sp),
                 np.mean(zcr), np.std(zcr),
                 np.mean(s_centroid), np.std(s_centroid),
                 np.mean(s_rolloff), np.std(s_rolloff),
@@ -67,7 +72,7 @@ for i, f in enumerate(files):
 
     df.loc[i] = features
 
-df.to_csv("data/new.csv")
+df.to_csv("data/features.csv")
 
 # x, sr = librosa.load(files[0], sr=22050)
 #

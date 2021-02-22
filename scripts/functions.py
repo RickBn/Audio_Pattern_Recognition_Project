@@ -3,33 +3,38 @@ import numpy as np
 import librosa
 from sklearn.metrics import accuracy_score
 
+def energy(y, win_len = 2048, hop_len = 512):
 
-def spectral_flux(audio_data, sample_rate=22050):
-    # convert to frequency domain
-    magnitude_spectrum = librosa.stft(audio_data)
-    timebins, freqbins = np.shape(magnitude_spectrum)
+    energy = np.array([
+        (1 / len(y[i : i + win_len])) * sum(abs(y[i : i + win_len] ** 2))
+        for i in range(0, len(y), hop_len)
+    ])
 
-    # when do these blocks begin (time in seconds)?
-    timestamps = (np.arange(0, timebins - 1) * (timebins / float(sample_rate)))
+    return energy
 
-    sf = np.sum(np.diff(np.abs(magnitude_spectrum), axis=0) ** 2, axis=1)
-    return sf[1:], np.asarray(timestamps)
+def energy_entropy(y, win_len = 2048, hop_len = 512, num_short_blocks = 10):
 
-def spectral_flux(signal):
-    mag_spectrum = np.abs(librosa.stft(signal))
-    sp_flux = [0]
-    for i in range(1, len(mag_spectrum)):
-        windowFFT = mag_spectrum[i]
-        windowFFTPrev = mag_spectrum[i - 1]
+    eps = np.finfo(float).eps
+    entropy = []
 
-        windowFFT = windowFFT / sum(windowFFT)
-        windowFFTPrev = windowFFTPrev / sum(windowFFTPrev)
+    for i in range(0, len(y), hop_len):
+        window = y[i:i + win_len]
+        window_size = len(window)
+        e_short = np.sum(window ** 2)
+        sub_win_len = int(np.floor(window_size / num_short_blocks))
 
-        sp_flux.append(sum((windowFFT - windowFFTPrev)**2))
+        if window_size != (sub_win_len * num_short_blocks):
+            window = window[0 : (sub_win_len * num_short_blocks)]
 
-    return sp_flux[1:]
+        sub_windows = window.reshape(num_short_blocks, sub_win_len)
+
+        e = np.sum(sub_windows ** 2) / (e_short + eps)
+        entropy.append(-np.sum(e * np.log2(e + eps)))
+
+    return entropy
 
 def detectOutliers(df, rm=False):
+
     for f in df.columns:
         q1 = np.percentile(df[f], 25, interpolation='midpoint')
         q3 = np.percentile(df[f], 75, interpolation='midpoint')
