@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 from scripts.functions import *
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, LabelEncoder
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import seaborn as sn
 from sklearn import cluster
 from sklearn import metrics
@@ -13,14 +14,14 @@ features = df.keys()[1:]
 
 X = df.loc[:, df.columns != 'genre']
 y = df.genre
+genres_encoded = LabelEncoder().fit_transform(y)
 scaler = MinMaxScaler()
-#scaler = StandardScaler()
 X = pd.DataFrame(scaler.fit_transform(X), columns=features)
 
 pca = PCA(n_components=2)
 X = pca.fit_transform(X)
 
-num_clusters = 10
+num_clusters = 3
 kmeans = cluster.KMeans(n_clusters=num_clusters)
 
 kmeans.fit(X)
@@ -48,12 +49,12 @@ print(kmeans.score(X))
 X = pd.DataFrame(X, columns=['x', 'y'])
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
-x = X.x
-y = X.y
-ax.scatter(x, y=y, c=clusters, s=30)
-
-for i, txt in enumerate(df.genre):
-    ax.annotate(txt, (x[i], y[i]))
+scatter = ax.scatter(X.x, X.y, c=clusters, cmap=cm.tab10, label=y.unique(), s=30)
+#scatter = ax.scatter(X.x, X.y, c=genres_encoded, cmap=cm.tab10, label=y.unique(), s=30)
+ax.legend()
+legend = ax.legend(*scatter.legend_elements(), title="Genres")
+for i, g in enumerate(y.unique()):
+	legend.get_texts()[i].set_text(g)
 
 c_df = pd.DataFrame(clusters, columns=['cluster'])
 c_df['genre'] = df.genre
