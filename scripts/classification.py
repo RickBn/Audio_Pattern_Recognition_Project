@@ -25,8 +25,12 @@ scaler = StandardScaler()
 #K-NN
 knn_cv_train, knn_cv_test, knn_y_t, knn_y_p = k_fold_cv(s_df, 10, KNeighborsClassifier(n_neighbors=3), scaler)
 knn_conf_matrix = pd.crosstab(knn_y_t, knn_y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
-sn.heatmap(knn_conf_matrix, annot=True, fmt='d').set_title("K-NN")
-print(classification_report(knn_y_t, knn_y_p))
+#sn.heatmap(knn_conf_matrix, annot=True, fmt='d').set_title("K-NN")
+
+report = classification_report(knn_y_t, knn_y_p, output_dict=True)
+print(report)
+
+df_classification_report1 = pd.DataFrame(report1).transpose()
 
 #Decision Tree
 tree_cv_train, tree_cv_test, tree_y_t, tree_y_p = k_fold_cv(s_df, 10, DecisionTreeClassifier(random_state=0), scaler)
@@ -35,7 +39,7 @@ sn.heatmap(tree_conf_matrix, annot=True, fmt='d').set_title("Decision Tree")
 print(classification_report(tree_y_t, tree_y_p))
 
 #Multylayer Perceptron
-mlp_cv_train, mlp_cv_test, mlp_y_t, mlp_y_p = k_fold_cv(s_df, 10, MLPClassifier(hidden_layer_sizes=(128, 64, 32), max_iter=1000), scaler)
+mlp_cv_train, mlp_cv_test, mlp_y_t, mlp_y_p = k_fold_cv(s_df, 10, MLPClassifier(hidden_layer_sizes=(128, 64, 32), solver='adam', max_iter=1000), scaler)
 mlp_conf_matrix = pd.crosstab(mlp_y_t, mlp_y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
 sn.heatmap(mlp_conf_matrix, annot=True, fmt='d').set_title("Multylayer Perceptron")
 print(classification_report(mlp_y_t, mlp_y_p))

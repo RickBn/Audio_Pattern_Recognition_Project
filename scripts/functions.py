@@ -2,11 +2,12 @@ import pandas as pd
 import numpy as np
 import librosa
 from sklearn.metrics import accuracy_score
+from collections import defaultdict
 
 def energy(y, win_len = 2048, hop_len = 512):
 
     energy = np.array([
-        (1 / len(y[i : i + win_len])) * sum(abs(y[i : i + win_len] ** 2))
+        (1 / len(y[i: i + win_len])) * sum(abs(y[i: i + win_len] ** 2))
         for i in range(0, len(y), hop_len)
     ])
 
@@ -112,3 +113,28 @@ def k_fold_cv(data, num_splits, classifier, scaler):
     y_p = pd.Series(pd.concat(y_p).values, name='Predicted')
 
     return [cv_train, cv_test, y_t, y_p]
+
+def merge_conf_matrices(cm):
+    d = defaultdict(list)
+
+    d['accuracy'] = []
+    for k in cm[0].keys():
+        if k != 'accuracy':
+            d[k] = {}
+            for k2 in cm[0][k].keys():
+                d[k][k2] = []
+
+    for dict in cm:
+        d['accuracy'].append(dict['accuracy'])
+        for k in dict.keys():
+            if k != 'accuracy':
+                for k2 in dict[k].keys():
+                    d[k][k2].append(dict[k][k2])
+
+    d['accuracy'] = np.mean(d['accuracy'])
+    for k in d.keys():
+        if k != 'accuracy':
+            for k2 in d[k].keys():
+                d[k][k2] = np.mean(d[k][k2])
+
+    return d

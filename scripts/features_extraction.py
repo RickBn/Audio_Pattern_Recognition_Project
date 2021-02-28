@@ -28,8 +28,9 @@ files = librosa.util.find_files(path, ext=['wav'])
 files = np.array(files)
 files = np.delete(files, 554)
 
-df = pd.DataFrame(data={'genre': [], 'rms_mean': [], 'rms_std': [], 'sp_flux_mean': [], 'sp_flux_var': [],
-                        'mel_spectrogram_mean' : [], 'mel_spectrogram_var' : [],
+df = pd.DataFrame(data={'genre': [], 'rms_mean': [], 'rms_std': [],
+                        'energy_entropy_mean': [], 'energy_entropy_std': [],
+                        'sp_flux_mean': [], 'sp_flux_std': [], 'mel_spectrogram_mean': [], 'mel_spectrogram_std': [],
                         'zcr_mean': [], 'zcr_std': [], 'spectral_centroid_mean': [], 'spectral_centroid_std': [],
                         'spectral_rolloff_mean': [], 'spectral_rolloff_std': [], 'chroma_mean': [], 'chroma_std': [],
                         'mfcc1_mean': [], 'mfcc1_std': [], 'mfcc2_mean': [], 'mfcc2_std': [],
@@ -49,6 +50,7 @@ for i, f in enumerate(files):
     t = f.split('\\')
     y = signals[i]
     rms = librosa.feature.rms(y)[0]
+    entropy = energy_entropy(y)
     flux = librosa.onset.onset_strength(y, sr=sr)
     mel_sp = librosa.feature.melspectrogram(y, sr=sr)
     zcr = librosa.feature.zero_crossing_rate(y)
@@ -59,6 +61,7 @@ for i, f in enumerate(files):
 
     features = [t[-2],
                 np.mean(rms), np.std(rms),
+                np.mean(entropy), np.std(entropy),
                 np.mean(flux), np.std(flux),
                 np.mean(mel_sp), np.std(mel_sp),
                 np.mean(zcr), np.std(zcr),
@@ -73,12 +76,3 @@ for i, f in enumerate(files):
     df.loc[i] = features
 
 df.to_csv("data/features.csv")
-
-# x, sr = librosa.load(files[0], sr=22050)
-#
-# X = librosa.stft(x)
-# Xdb = librosa.amplitude_to_db(abs(X))
-# plt.figure(figsize=(14, 5))
-# librosa.display.specshow(Xdb, sr=sr, x_axis='time', y_axis='hz')
-# plt.title("Spectogram")
-# plt.colorbar()
