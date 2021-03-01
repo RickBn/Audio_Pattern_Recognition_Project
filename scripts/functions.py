@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 import librosa
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.utils import shuffle
 from collections import defaultdict
 
 def energy(y, win_len = 2048, hop_len = 512):
@@ -57,22 +58,6 @@ def removeOutliers(df):
     X['genre'] = y
 
     return X
-
-def n_shuffle_cv(df, num_splits, params, num_shuffles):
-    cv_train, cv_test = [[] for i in range(num_shuffles)], [[] for i in range(num_shuffles)]
-
-    for i in range(num_shuffles):
-        train, test = k_fold_cv(df, num_splits, params)
-        cv_train[i] = train
-        cv_test[i] = test
-
-
-    train_df = pd.DataFrame(cv_train)
-    test_df = pd.DataFrame(cv_test)
-    final_train = train_df.mean()
-    final_test = test_df.mean()
-
-    return [final_train, final_test]
 
 def k_fold_cv(data, num_splits, classifier, scaler):
 
@@ -138,3 +123,17 @@ def merge_conf_matrices(cm):
                 d[k][k2] = np.mean(d[k][k2])
 
     return d
+
+def repeated_k_fold(df, repetitions, k, classifier, scaler):
+    cm = []
+
+    for i in range(repetitions):
+        s_df = shuffle(df)
+        cv_train, cv_test, y_t, y_p = k_fold_cv(s_df, k, classifier, scaler)
+        report = classification_report(y_t, y_p, output_dict=True)
+        cm.append(report)
+        print(cv_train, cv_test)
+
+    m = merge_conf_matrices(cm)
+    m = pd.DataFrame(m).transpose()
+    return m
