@@ -14,62 +14,73 @@ features = df.keys()[1:]
 X = df.loc[:, df.columns != 'genre']
 y = df.genre
 
-# classifier = KNeighborsClassifier(n_neighbors=a)
-# classifier = DecisionTreeClassifier(random_state=0)
-# classifier = MLPClassifier(random_state=1, max_iter=800)
-# classifier = svm.SVC(C=a, decision_function_shape='ovo')
-
-s_df = shuffle(df)
 scaler = StandardScaler()
-
-m = repeated_k_fold(df, 10, 10, KNeighborsClassifier(n_neighbors=3), scaler)
+num_folds, repetitions = 10, 10
 
 #K-NN
-knn_cv_train, knn_cv_test, knn_y_t, knn_y_p = k_fold_cv(s_df, 10, KNeighborsClassifier(n_neighbors=3), scaler)
-knn_conf_matrix = pd.crosstab(knn_y_t, knn_y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
-sn.heatmap(knn_conf_matrix, annot=True, fmt='d').set_title("K-NN")
-report = classification_report(knn_y_t, knn_y_p, output_dict=True)
-print(report)
+
+#Parameter analysis
+np = np.arange(1, 10, 1)
+knn_train = []
+knn_test = []
+for n in np:
+	knn_m, knn_cv_train, knn_cv_test = repeated_k_fold(df, repetitions, num_folds, KNeighborsClassifier(n_neighbors=n), scaler)
+	knn_train.append(knn_cv_train)
+	knn_test.append(knn_cv_test)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(np, knn_train)
+ax.plot(np, knn_test)
+ax.set_xlabel('n_neighbors')
+ax.set_ylabel('accuracy')
+ax.legend(labels=['training accuracy', 'test accuracy'])
+
+#Classification
+knn_m, knn_cv_train, knn_cv_test = repeated_k_fold(df, repetitions, num_folds, KNeighborsClassifier(n_neighbors=3), scaler)
 
 #Decision Tree
-tree_cv_train, tree_cv_test, tree_y_t, tree_y_p = k_fold_cv(s_df, 10, DecisionTreeClassifier(random_state=0), scaler)
-#tree_conf_matrix = pd.crosstab(tree_y_t, tree_y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
-#sn.heatmap(tree_conf_matrix, annot=True, fmt='d').set_title("Decision Tree")
-#print(classification_report(tree_y_t, tree_y_p))
+
+#Parameter analysis
+np = np.arange(10, 200, 10)
+tree_train = []
+tree_test = []
+for n in np:
+	tree_m, tree_cv_train, tree_cv_test = repeated_k_fold(df, repetitions, num_folds, DecisionTreeClassifier(criterion='entropy', max_leaf_nodes=n), scaler)
+	tree_train.append(tree_cv_train)
+	tree_test.append(tree_cv_test)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(np, tree_train)
+ax.plot(np, tree_test)
+ax.set_xlabel('max_leaf_nodes')
+ax.set_ylabel('accuracy')
+ax.legend(labels=['training accuracy', 'test accuracy'])
+
+#Classification
+tree_m, tree_cv_train, tree_cv_test = repeated_k_fold(df, repetitions, num_folds, DecisionTreeClassifier(criterion='entropy'), scaler)
 
 #Multylayer Perceptron
-mlp_cv_train, mlp_cv_test, mlp_y_t, mlp_y_p = k_fold_cv(s_df, 10, MLPClassifier(hidden_layer_sizes=(128, 64, 32), solver='adam', max_iter=1000), scaler)
-mlp_conf_matrix = pd.crosstab(mlp_y_t, mlp_y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
-sn.heatmap(mlp_conf_matrix, annot=True, fmt='d').set_title("Multylayer Perceptron")
-print(classification_report(mlp_y_t, mlp_y_p))
+
+#Classification
+mlp_m, mlp_cv_train, mlp_cv_test = repeated_k_fold(df, repetitions, num_folds, MLPClassifier(hidden_layer_sizes=(128, 64, 32), solver='adam', max_iter=1000), scaler)
 
 #Support Vector Machines (kernel = rbf, one-vs-one)
 
-svm_cv_train, svm_cv_test, svm_y_t, svm_y_p = k_fold_cv(s_df, 10, svm.SVC(C=2, decision_function_shape='ovo', kernel='rbf'), scaler)
-svm_conf_matrix = pd.crosstab(svm_y_t, svm_y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
-sn.heatmap(svm_conf_matrix, annot=True, fmt='d').set_title("Support Vector Machines (kernel = rbf)")
-print(classification_report(svm_y_t, svm_y_p))
+#Parameter analysis
+np = [1, 2, 3, 4, 5, 10, 20]
+svm_train = []
+svm_test = []
+for n in np:
+	svm_m, svm_cv_train, svm_cv_test = repeated_k_fold(df, repetitions, num_folds, svm.SVC(C=n, decision_function_shape='ovo', kernel='rbf'), scaler)
+	svm_train.append(svm_cv_train)
+	svm_test.append(svm_cv_test)
 
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(np, svm_train)
+ax.plot(np, svm_test)
+ax.set_xlabel('C')
+ax.set_ylabel('accuracy')
+ax.legend(labels=['training accuracy', 'test accuracy'])
 
-# c = [1, 2, 5, 10, 20, 50, 100, 1000]
-#
-# for c in c:
-# 	svm_cv_train, svm_cv_test, svm_y_t, svm_y_p = k_fold_cv(s_df, 10,
-# 	                                                        svm.SVC(C=c, decision_function_shape='ovo', kernel='rbf'),
-# 	                                                        scaler)
-# 	print(c, accuracy_score(svm_y_t, svm_y_p))
-
-
-
-#Accuracy = (TP + TN)/(TP + TN + FP + FN)
-#Precision = TP / (TP + FP) number of correct classifications on total positives
-#Recall = TP / (TP + FN) number of relevant correct classifications
-#F1 score: test accuracy = 2 * (precision*recall) / (precision + recall) <- harmonic mean of precision and recall
-
-
-# fig, ax = plt.subplots(figsize=(10, 5))
-# ax.plot(k, cv_train)
-# ax.plot(k, cv_test)
-# ax.set_xlabel('k')
-# ax.set_ylabel('Accuracy')
-# ax.legend(labels=['training error', 'test error'])
+#Classification
+svm_m, svm_cv_train, svm_cv_test = repeated_k_fold(df, repetitions, num_folds, svm.SVC(C=5, decision_function_shape='ovo', kernel='rbf'), scaler)
