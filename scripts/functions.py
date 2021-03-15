@@ -4,6 +4,7 @@ import librosa
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.utils import shuffle
 from collections import defaultdict
+import matplotlib.pyplot as plt
 
 def energy(y, win_len = 2048, hop_len = 512):
 
@@ -83,7 +84,6 @@ def k_fold_cv(data, num_splits, classifier, scaler):
             X_test = scaler.fit_transform(X_test)
 
         classifier.fit(X_train, y_train)
-
         y_p_train = classifier.predict(X_train)
         cv_train_error[j] = accuracy_score(y_train, y_p_train)
 
@@ -97,9 +97,9 @@ def k_fold_cv(data, num_splits, classifier, scaler):
     y_t = pd.Series(pd.concat(y_t).values, name='Actual')
     y_p = pd.Series(pd.concat(y_p).values, name='Predicted')
 
-    return [cv_train, cv_test, y_t, y_p]
+    return cv_train, cv_test, y_t, y_p
 
-def merge_conf_matrices(cm):
+def merge_report(cm):
     d = defaultdict(list)
 
     d['accuracy'] = []
@@ -124,16 +124,26 @@ def merge_conf_matrices(cm):
 
     return d
 
-def repeated_k_fold(df, repetitions, k, classifier, scaler):
+def repeated_k_fold(df, repetitions, num_folds, classifier, scaler):
     cm = []
+    train_acc = []
+    test_acc = []
+    conf_matrix = 0
 
     for i in range(repetitions):
         s_df = shuffle(df)
-        cv_train, cv_test, y_t, y_p = k_fold_cv(s_df, k, classifier, scaler)
+        cv_train, cv_test, y_t, y_p = k_fold_cv(s_df, num_folds, classifier, scaler)
+        conf_matrix += pd.crosstab(y_t, y_p, rownames=['Actual'], colnames=['Predicted'], margins=True)
         report = classification_report(y_t, y_p, output_dict=True)
         cm.append(report)
-        print(cv_train, cv_test)
+        train_acc.append(cv_train)
+        test_acc.append(cv_test)
 
-    m = merge_conf_matrices(cm)
+    m = merge_report(cm)
     m = pd.DataFrame(m).transpose()
-    return m
+    train_acc = np.mean(train_acc)
+    test_acc = np.mean(test_acc)
+    print("Training accuracy: ", np.round(train_acc, 2))
+    print("Test accuracy: ", np.round(test_acc, 2))
+
+    return m[1:], (conf_matrix/repetitions), train_acc, test_acc,

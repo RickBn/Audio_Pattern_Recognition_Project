@@ -113,5 +113,3 @@ for c in c_groups:
 
 summary = summary.fillna(0)
 sn.heatmap(summary, annot=True, fmt='d')
-
-
