@@ -1,26 +1,11 @@
 import numpy as np
 import pandas as pd
-import wave
-from scripts.functions import energy, energy_entropy
+from scripts.functions import energy_entropy
 import librosa
 import librosa.display
-import matplotlib.pyplot as plt
 
 sr = 22050
 path = "data/genres_original/"
-
-# file = "data/genres_original/blues/blues.00000.wav"
-# with wave.open(file, 'rb') as f:
-#     framerate = f.getframerate()
-#
-# y, sr = librosa.load(file, sr=22050)
-#
-# plt.figure(figsize=(15,5))
-# librosa.display.waveplot(Signal, sr=sr)
-# plt.xlabel('Time')
-# plt.ylabel('Amplitude')
-# plt.title("Classical music signal")
-# plt.show()
 
 df = pd.DataFrame()
 

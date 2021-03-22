@@ -1,5 +1,3 @@
-import numpy as np
-import pandas as pd
 from scripts.functions import *
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, LabelEncoder
 import matplotlib.pyplot as plt
@@ -53,16 +51,19 @@ kmeans.fit(X)
 centroids = kmeans.cluster_centers_
 clusters = kmeans.labels_
 
+#Metrics
 print(centroids)
 print(kmeans.score(X))
 silhouette_score = metrics.silhouette_score(X, clusters, metric='euclidean')
 print(silhouette_score)
 
+#Scatter plot
 X = pd.DataFrame(X, columns=['x', 'y'])
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 scatter = ax.scatter(X.x, X.y, c=clusters, cmap=cm.tab10, label=y.unique(), s=30)
 
+#Summary heatmap
 c_df = pd.DataFrame(clusters, columns=['cluster'])
 c_df['genre'] = df.genre
 
@@ -88,16 +89,19 @@ kmeans.fit(X)
 centroids = kmeans.cluster_centers_
 clusters = kmeans.labels_
 
+#Metrics
 print(centroids)
 print(kmeans.score(X))
 silhouette_score = metrics.silhouette_score(X, clusters, metric='euclidean')
 print(silhouette_score)
 
+#Plot
 X = pd.DataFrame(X, columns=['x', 'y'])
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 scatter = ax.scatter(X.x, X.y, c=clusters, cmap=cm.tab10, label=y.unique(), s=30)
 
+#Summary heatmap
 c_df = pd.DataFrame(clusters, columns=['cluster'])
 c_df['genre'] = df.genre
 
